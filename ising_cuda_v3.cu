@@ -9,8 +9,8 @@
 #include <stdlib.h>
 #include <time.h>
 
-#define N 16384
-#define threadsNum 64
+#define N 512
+#define threadsNum 32
 
 #define gpuErrchk(ans) { gpuAssert((ans), __FILE__, __LINE__); }
 inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=true)
@@ -36,13 +36,13 @@ __global__ void spin(int *G_d, double *w, int *newG_d, int n) {
 
     // Block-exclusive Atomic Spins Matrix G[G_length^2] is transfered to shared memory.
     __shared__ int G[G_length*G_length];
-    for (int i=threadIdx.x; i<G_length*G_length; i+=blockDim.x)
+    for (int i=threadIdx.x*(G_length*G_length/blockDim.x + 1); i<(threadIdx.x+1)*(G_length*G_length/blockDim.x + 1) && i<G_length*G_length; i++)
         G[i] = G_d[((index/n - 2 + i/G_length + n) % n) * n + (index%n - 2 + i%G_length + n) % n];
     __syncthreads();
 
-    index += threadIdx.x*n;
+    index += threadIdx.x;
     double weightSum;
-    for (int i=index; i<index+blockDim.x; i++) {
+    for (int i=index; i<index+blockDim.x*n; i+=n) {
         weightSum = 0;
 
         // Calculates weight contribution for each neighboring Atomic Spin and sums it.
@@ -149,14 +149,14 @@ int main() {
     // Allocates memory for the Atomic Spins Matrix.
     int *G = (int *)malloc(n*n * sizeof(int));
 
-
+    
     // Randomizes seed.
     srand(time(NULL));
 
     // Fills the Atomic Spins Matrix with "-1" and "1" values from a uniform distribution.
     for (int i=0; i<n*n; i++)
         G[i] = ((rand() % 2) * 2) - 1;
-
+    
     /*
     // Reads configuration file.
     size_t readStatus;
@@ -171,7 +171,9 @@ int main() {
     for (int i=0; i<n*n; i++)
         G[i] = initG[i];
     */
-    ising(G, w, 10, n);
+
+    ising(G, w, 1, n);
+
     /*
     // Reads configuration file for state after one iteration.
     size_t readStatus1;
@@ -193,7 +195,7 @@ int main() {
     else
         printf("Wrong Results. Number of errors: %d\n", errorsNum);
 
-
+    
     // Checks the results.
     for (int i=0; i<n; i++) {
         for (int j=0; j<n; j++) {
@@ -208,6 +210,4 @@ int main() {
     */
 
     return 0;
-
 }
-
