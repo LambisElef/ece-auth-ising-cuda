@@ -9,8 +9,8 @@
 #include <stdlib.h>
 #include <time.h>
 
-#define N 16384
-#define threadsNum 128
+#define N 512
+#define threadsNum 32
 
 #define gpuErrchk(ans) { gpuAssert((ans), __FILE__, __LINE__); }
 inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=true)
@@ -26,7 +26,7 @@ inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=t
 __global__ void spin(int *G, double *w, int *newG, int n) {
 
     // Calculates the first Atomic Spin index. Note: n/blockDim.x=sqrt(gridDim.x).
-    int index = (blockIdx.x/(n/blockDim.x))*n*blockDim.x + (blockIdx.x%(n/blockDim.x))*blockDim.x + threadIdx.x*n;
+    int index = (blockIdx.x/(n/blockDim.x))*n*blockDim.x + (blockIdx.x%(n/blockDim.x))*blockDim.x + threadIdx.x;
 
     // Checks for out of bounds indexing and if so quits.
     if (index >= n*n)
@@ -34,7 +34,7 @@ __global__ void spin(int *G, double *w, int *newG, int n) {
 
     double weightSum;
 
-    for (int i=index; i<index+blockDim.x; i++) {
+    for (int i=index; i<index+blockDim.x*n; i+=n) {
         weightSum = 0;
 
         // Calculates weight contribution for each neighboring Atomic Spin and sums it.
@@ -163,7 +163,9 @@ int main() {
     for (int i=0; i<n*n; i++)
         G[i] = initG[i];
     */
+
     ising(G, w, 10, n);
+
     /*
     // Reads configuration file for state after one iteration.
     size_t readStatus1;
@@ -202,4 +204,3 @@ int main() {
     return 0;
 
 }
-
