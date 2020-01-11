@@ -94,20 +94,23 @@ void ising(int *G, double *w, int k, int n) {
     // Allocates memory for the new Atomic Spins Matrix.
     int *newG = (int *)malloc(n*n * sizeof(int));
 
+    double timeAll = 0;
+    double timeIteration = 0;	
+
     // Checks if function has to be iterated.
-    while (k != 0) {
+    for (int i=0; i<k; i++) {
         
         clock_t start = clock();
 
         spin(G, w, newG, n);
         
         clock_t end = clock();
-        printf("Time taken: %f", (double)(end-start)/CLOCKS_PER_SEC);
-
-        k--;
+        timeIteration = (double)(end-start)/CLOCKS_PER_SEC;
+        timeAll += timeIteration;
+        printf("Time taken in iteration %d: %f\n", i, timeIteration);
 
 	// Checks if no further iterations are needed in case the new Atomic Spins Matrix is the same as the old one.
-	if (check(G, newG, n)
+	if (check(G, newG, n))
 	    break;
 
         // Atomix Spin Matrices' pointers swapping.
@@ -115,6 +118,8 @@ void ising(int *G, double *w, int k, int n) {
         G = newG;
         newG = temp;
     }
+
+    printf("\nAverage Time per iteration was: %f\n", timeAll/k);
 
     // Copies the result to the original G Atomic Spins Matrix. (G and newG pointers have been swapped swapped.)
     for (int i=0; i<n*n; i++)
