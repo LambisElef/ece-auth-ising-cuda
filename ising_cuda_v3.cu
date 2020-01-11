@@ -10,7 +10,7 @@
 #include <time.h>
 
 #define N 512
-#define threadsNum 32
+#define threadsNum 64
 
 #define gpuErrchk(ans) { gpuAssert((ans), __FILE__, __LINE__); }
 inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=true)
@@ -87,6 +87,24 @@ __global__ void spin(int *G_d, double *w, int *newG_d, int n) {
 
 }
 
+// Kernel Function that checks whether the new Atomic Spins Matrix is the same as the old one.
+__global__ void check(int *G, int *newG, int n, int *same) {
+
+    // Calculates Atomic Spin index.
+    int index = (blockIdx.x/(n/blockDim.x))*n*blockDim.x + (blockIdx.x%(n/blockDim.x))*blockDim.x + threadIdx.x;;
+
+    // Checks for out of bounds indexing and if so quits.
+    if (index >= n*n)
+        return;
+    
+    for (int i=index; i<index+blockDim.x*n; i+=n)
+        if (G[index] != newG[index]) {
+	    *same = 0;
+	    break;
+        }
+
+}
+
 void ising(int *G, double *w, int k, int n) {
 
     // Creates and transfers the Weight Matrix to GPU memory.
@@ -105,6 +123,12 @@ void ising(int *G, double *w, int k, int n) {
     int *newG_d;
     gpuErrchk( cudaMalloc((void **) &newG_d, G_size) );
 
+    // Creates and transfers a flag that states whether the new Atomic Spins Matrix and the old are the same to GPU memory.
+    int same = 1;
+    int *same_d;
+    gpuErrchk( cudaMalloc((void **) &same_d, sizeof(int)) );
+    gpuErrchk( cudaMemcpy(same_d, &same, sizeof(int), cudaMemcpyHostToDevice) );
+
     // Creates a temporary variable for Atomic Spin Matrices' pointers swapping and allocates it to GPU memory.
     int *temp_d;
 
@@ -117,6 +141,13 @@ void ising(int *G, double *w, int k, int n) {
         gpuErrchk( cudaPeekAtLastError() );
         gpuErrchk( cudaDeviceSynchronize() );
         k--;
+
+	check<<<n/threadsNum*n/threadsNum,threadsNum>>>(G_d, newG_d, n, same_d);
+        gpuErrchk( cudaPeekAtLastError() );
+        gpuErrchk( cudaDeviceSynchronize() );
+	gpuErrchk( cudaMemcpy(&same, same_d, sizeof(int), cudaMemcpyDeviceToHost) );
+	if (same)
+	    break;
 
         // Atomix Spin Matrices' pointers swapping.
         temp_d = G_d;
@@ -172,7 +203,7 @@ int main() {
         G[i] = initG[i];
     */
 
-    ising(G, w, 1, n);
+    ising(G, w, 1000, n);
 
     /*
     // Reads configuration file for state after one iteration.
