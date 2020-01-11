@@ -7,8 +7,11 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-//#include <time.h>
+#include <time.h>
 
+#define N 512
+
+// This function will be turned into a cuda kernel.
 void spin(int *G, double *w, int *newG, int n) {
 
     // To calculate every new Atomic Spin value do:
@@ -71,6 +74,21 @@ void spin(int *G, double *w, int *newG, int n) {
 
 }
 
+// This function will also be turned into a cuda kernel. Checks whether the new Atomic Spins Matrix is the same as the old one.
+int check(int *G, int *newG, int n) {
+
+    int same = 1;
+
+    for (int i=0; i<n*n; i++)
+	if (G[i] != newG[i]) {
+	    same = 0;
+            break;
+	}
+
+    return same;
+
+}
+
 void ising(int *G, double *w, int k, int n) {
 
     // Allocates memory for the new Atomic Spins Matrix.
@@ -78,8 +96,19 @@ void ising(int *G, double *w, int k, int n) {
 
     // Checks if function has to be iterated.
     while (k != 0) {
+        
+        clock_t start = clock();
+
         spin(G, w, newG, n);
+        
+        clock_t end = clock();
+        printf("Time taken: %f", (double)(end-start)/CLOCKS_PER_SEC);
+
         k--;
+
+	// Checks if no further iterations are needed in case the new Atomic Spins Matrix is the same as the old one.
+	if (check(G, newG, n)
+	    break;
 
         // Atomix Spin Matrices' pointers swapping.
         int *temp = G;
@@ -106,20 +135,20 @@ int main() {
                    0.004, 0.016, 0.026, 0.016, 0.004 };
 
     // Number of dimensions for the square Atomic Spins Matrix.
-    int n = 517;
+    int n = N;
 
     // Allocates memory for the Atomic Spins Matrix.
     int *G = (int *)malloc(n*n * sizeof(int));
 
-    /*
+
     // Randomizes seed.
     srand(time(NULL));
 
     // Fills the Atomic Spins Matrix with "-1" and "1" values from a uniform distribution.
     for (int i=0; i<n*n; i++)
         G[i] = ((rand() % 2) * 2) - 1;
-    */
 
+    /*
     // Reads configuration file.
     size_t readStatus;
     FILE *conf_init = fopen("conf-init.bin","rb");
@@ -132,9 +161,11 @@ int main() {
     // Fills the Atomic Spins Matrix with "-1" and "1" values from configuration file.
     for (int i=0; i<n*n; i++)
         G[i] = initG[i];
+    */
 
-    ising(G, w, 1, n);
+    ising(G, w, 10, n);
 
+    /*
     // Reads configuration file for state after one iteration.
     size_t readStatus1;
     FILE *conf_1 = fopen("conf-1.bin","rb");
@@ -155,7 +186,7 @@ int main() {
     else
         printf("Wrong Results. Number of errors: %d\n", errorsNum);
 
-    /*
+
     // Checks the results.
     for (int i=0; i<n; i++) {
         for (int j=0; j<n; j++) {
