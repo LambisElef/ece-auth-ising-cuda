@@ -125,14 +125,13 @@ void ising(int *G, double *w, int k, int n) {
     int *temp_d;
 
     // Checks if function has to be iterated.
-    while (k != 0) {
+    for (int i=0; i<k; i++) {
         // Calls the kernel function balancing load to (n/threadsNum)^2 blocks with threadsNum threads each.
 	// Each thread calculates threadsNum spins.
 	//! User has to specify numbers fitting the data correctly (sqrt(gridDim) * blockDim = n).
         spin<<<n/threadsNum*n/threadsNum,threadsNum>>>(G_d, w_d, newG_d, n);
         gpuErrchk( cudaPeekAtLastError() );
         gpuErrchk( cudaDeviceSynchronize() );
-        k--;
 
 	check<<<n/threadsNum*n/threadsNum,threadsNum>>>(G_d, newG_d, n, same_d);
         gpuErrchk( cudaPeekAtLastError() );
