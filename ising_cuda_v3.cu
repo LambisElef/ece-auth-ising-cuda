@@ -37,9 +37,7 @@ __global__ void spin(int *G_d, double *w, int *newG_d, int n) {
 
     // Block-exclusive Atomic Spins Matrix G[G_length^2] is transfered to shared memory.
     __shared__ int G[G_length*G_length];
-    //for (int i=threadIdx.x; i<G_length*G_length; i+=blockDim.x)
     for (int i=threadIdx.x*(G_length*G_length/blockDim.x + 1); i<(threadIdx.x+1)*(G_length*G_length/blockDim.x + 1) && i<G_length*G_length; i++)
-    
 	G[i] = G_d[((index/n - 2 + i/G_length + n) % n) * n + (index%n - 2 + i%G_length + n) % n];
     __syncthreads();
 
