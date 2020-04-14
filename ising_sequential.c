@@ -2,7 +2,7 @@
  * ising_sequential.c
  *
  *  Created on: Dec 14, 2019
- *      Author: Lambis
+ *      Author: Charalampos Eleftheriadis
  */
 
 #include <stdio.h>
