@@ -2,7 +2,7 @@
  * ising_cuda_v2.cu
  *
  *  Created on: Jan 01, 2019
- *      Author: Lambis
+ *      Author: Charalampos Eleftheriadis
  */
 
 #include <stdio.h>
