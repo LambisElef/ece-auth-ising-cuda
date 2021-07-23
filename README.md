@@ -1,4 +1,16 @@
-## Ising Model – Serial and CUDA Implementation in C
+# ece-auth-ising-cuda
+School of Electrical and Computer Engineering, Aristotle University of Thessaloniki
+
+This is the third assignment for the course "Parallel and Distributed Systems" for the 2019-2020 academic year.
+
+### Files description:
+- ising_cuda_v1.cu:         Source file for the CUDA v1 implementation.
+- ising_cuda_v2.cu:         Source file for the CUDA v2 implementation.
+- ising_cuda_v3.cu:         Source file for the CUDA v3 implementation.
+- ising_cuda_sequential.c:  Source file for the sequential implementation.
+- Assignment.pdf:           The assignment.
+- Report.pdf:               The assignment's report.
+
 
 ### Περιγραφή του προβλήματος:
 Ζητούμενο της εργασίας ήταν η υλοποίηση του φερρομαγνητικού μοντέλου ising, αρχικά σειριακά και κατόπιν παράλληλα με χρήση GPU και CUDA. Μέσα στον κώδικα υπάρχουν εκτενή σχόλια που περιγράφουν τη λειτουργία του.
